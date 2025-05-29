@@ -19,7 +19,7 @@ import { auth } from '@/lib/firebase/config'; // Import auth directly
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'; // Import necessary functions
 
 export function AppHeader() {
-  const { user, isLoggedIn, isLoading: authIsLoading } = useAuth(); // Renamed isLoading to authIsLoading
+  const { user, isLoggedIn, isLoading: authIsLoading } = useAuth();
   const { toast } = useToast();
 
   const handleSignIn = async () => {
@@ -31,47 +31,58 @@ export function AppHeader() {
     }
 
     const provider = new GoogleAuthProvider();
-    console.log("Firebase Auth instance:", auth); // Check if auth is initialized
-    console.log("Google Auth Provider:", provider); // Check provider
+    console.log("Firebase Auth instance:", auth);
+    console.log("Google Auth Provider:", provider);
 
     try {
       const result = await signInWithPopup(auth, provider);
       console.log("Sign-in successful. User:", result.user);
       toast({ title: "Signed In", description: `Welcome back, ${result.user.displayName || result.user.email}!` });
     } catch (error: any) {
-      console.error("Sign-in error object:", error); // Log the full error object
-      let description = "Could not sign in with Google. Please try again.";
+      console.error("Sign-in error object:", error); 
+      
+      let toastTitle = "Sign In Failed";
+      let toastDescription = "Could not sign in with Google. Please try again.";
+      let toastVariant: "default" | "destructive" = "destructive";
+
       if (error.code) {
         console.error(`Firebase Auth Error Code: ${error.code}, Message: ${error.message}`);
         switch (error.code) {
           case 'auth/popup-closed-by-user':
-            description = "Sign-in cancelled. The pop-up was closed by the user.";
+            toastTitle = "Sign-In Cancelled";
+            toastDescription = "You closed the sign-in window before completing the process.";
+            toastVariant = "default"; // Use default variant for user cancellation
             break;
           case 'auth/popup-blocked':
-            description = "Sign-in failed. The pop-up was blocked by your browser. Please disable pop-up blockers for this site and try again.";
+            toastDescription = "Sign-in failed. The pop-up was blocked by your browser. Please disable pop-up blockers for this site and try again.";
             break;
           case 'auth/cancelled-popup-request':
-            description = "Sign-in cancelled. Another sign-in pop-up was already active. Please close it and try again.";
+             toastTitle = "Sign-In Cancelled";
+            toastDescription = "Sign-in cancelled. Another sign-in pop-up was already active. Please close it and try again.";
+            toastVariant = "default";
             break;
           case 'auth/operation-not-allowed':
-            description = "Sign-in failed. Google Sign-In may not be enabled for this app in the Firebase console. Please contact support.";
+            toastDescription = "Sign-in failed. Google Sign-In may not be enabled for this app in the Firebase console. Please contact support.";
             break;
           case 'auth/unauthorized-domain':
-            description = "Sign-in failed. This domain is not authorized for OAuth operations for this Firebase project. Check your Firebase console's Auth settings.";
+            toastDescription = "Sign-in failed. This domain is not authorized for OAuth operations for this Firebase project. Check your Firebase console's Auth settings.";
             break;
           default:
-            description = `An unexpected error occurred during sign-in. (Code: ${error.code})`;
+            toastDescription = `An unexpected error occurred during sign-in. (Code: ${error.code})`;
         }
       } else {
         console.error("A non-Firebase error occurred during sign-in:", error);
       }
-      toast({ title: "Sign In Failed", description, variant: "destructive" });
+      // Only show toast if it's not a user-initiated cancellation that we want to ignore,
+      // or if it's an actual error.
+      // For 'auth/popup-closed-by-user', we show a default toast. For others, a destructive one.
+      toast({ title: toastTitle, description: toastDescription, variant: toastVariant });
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await auth.signOut(); // Use auth.signOut() directly from client SDK
+      await auth.signOut(); 
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
     } catch (error: any) {
       console.error("Sign out error", error);
@@ -90,7 +101,7 @@ export function AppHeader() {
         </Link>
 
         <div className="flex items-center space-x-3">
-          {authIsLoading ? ( // Use authIsLoading here
+          {authIsLoading ? ( 
              <Button variant="ghost" size="icon" disabled className="h-9 w-9 rounded-full animate-pulse bg-muted"></Button>
           ) : isLoggedIn && user ? (
             <DropdownMenu>
@@ -126,7 +137,7 @@ export function AppHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={handleSignIn} variant="outline" disabled={authIsLoading}> {/* Disable button if auth is loading */}
+            <Button onClick={handleSignIn} variant="outline" disabled={authIsLoading}>
               <LogIn className="mr-2 h-4 w-4" />
               Sign In
             </Button>
