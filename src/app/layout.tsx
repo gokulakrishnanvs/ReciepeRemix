@@ -4,6 +4,7 @@ import './globals.css';
 import { cn } from '@/lib/utils';
 import { Toaster } from '@/components/ui/toaster';
 import { AppHeader } from '@/components/layout/header';
+import { AuthProvider } from '@/hooks/use-auth'; // Import AuthProvider
 
 const fontSans = FontSans({
   subsets: ['latin'],
@@ -28,11 +29,13 @@ export default function RootLayout({
           fontSans.variable
         )}
       >
-        <div className="relative flex min-h-screen flex-col bg-background">
-          <AppHeader />
-          <main className="flex-1">{children}</main>
-        </div>
-        <Toaster />
+        <AuthProvider> {/* Wrap with AuthProvider */}
+          <div className="relative flex min-h-screen flex-col bg-background">
+            <AppHeader />
+            <main className="flex-1">{children}</main>
+          </div>
+          <Toaster />
+        </AuthProvider>
       </body>
     </html>
   );

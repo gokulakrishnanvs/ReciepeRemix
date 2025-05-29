@@ -16,6 +16,14 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      { // Added for Firebase Storage if user photos are hosted there
+        protocol: 'https',
+        hostname: 'firebasestorage.googleapis.com',
+      },
+      { // Added for Google User photos
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      }
     ],
   },
 };
