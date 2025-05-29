@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { signOutUser, signInWithGoogle } from '@/app/actions/auth-actions';
 import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
@@ -16,28 +15,67 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { auth } from '@/lib/firebase/config'; // Import auth directly
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth'; // Import necessary functions
 
 export function AppHeader() {
-  const { user, isLoggedIn, isLoading } = useAuth();
+  const { user, isLoggedIn, isLoading: authIsLoading } = useAuth(); // Renamed isLoading to authIsLoading
   const { toast } = useToast();
 
   const handleSignIn = async () => {
+    console.log("Attempting to sign in with Google...");
+    if (authIsLoading) {
+      console.log("Auth is still loading. Aborting sign-in attempt.");
+      toast({ title: "Please Wait", description: "Authentication is still initializing. Please try again shortly.", variant: "default" });
+      return;
+    }
+
+    const provider = new GoogleAuthProvider();
+    console.log("Firebase Auth instance:", auth); // Check if auth is initialized
+    console.log("Google Auth Provider:", provider); // Check provider
+
     try {
-      await signInWithGoogle();
-      toast({ title: "Signed In", description: "Welcome back!" });
-    } catch (error) {
-      console.error("Sign in error", error);
-      toast({ title: "Sign In Failed", description: "Could not sign in with Google. Please try again.", variant: "destructive" });
+      const result = await signInWithPopup(auth, provider);
+      console.log("Sign-in successful. User:", result.user);
+      toast({ title: "Signed In", description: `Welcome back, ${result.user.displayName || result.user.email}!` });
+    } catch (error: any) {
+      console.error("Sign-in error object:", error); // Log the full error object
+      let description = "Could not sign in with Google. Please try again.";
+      if (error.code) {
+        console.error(`Firebase Auth Error Code: ${error.code}, Message: ${error.message}`);
+        switch (error.code) {
+          case 'auth/popup-closed-by-user':
+            description = "Sign-in cancelled. The pop-up was closed by the user.";
+            break;
+          case 'auth/popup-blocked':
+            description = "Sign-in failed. The pop-up was blocked by your browser. Please disable pop-up blockers for this site and try again.";
+            break;
+          case 'auth/cancelled-popup-request':
+            description = "Sign-in cancelled. Another sign-in pop-up was already active. Please close it and try again.";
+            break;
+          case 'auth/operation-not-allowed':
+            description = "Sign-in failed. Google Sign-In may not be enabled for this app in the Firebase console. Please contact support.";
+            break;
+          case 'auth/unauthorized-domain':
+            description = "Sign-in failed. This domain is not authorized for OAuth operations for this Firebase project. Check your Firebase console's Auth settings.";
+            break;
+          default:
+            description = `An unexpected error occurred during sign-in. (Code: ${error.code})`;
+        }
+      } else {
+        console.error("A non-Firebase error occurred during sign-in:", error);
+      }
+      toast({ title: "Sign In Failed", description, variant: "destructive" });
     }
   };
 
   const handleSignOut = async () => {
     try {
-      await signOutUser();
+      await auth.signOut(); // Use auth.signOut() directly from client SDK
       toast({ title: "Signed Out", description: "You have been successfully signed out." });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Sign out error", error);
-      toast({ title: "Sign Out Failed", description: "Could not sign out. Please try again.", variant: "destructive" });
+      toast({ title: "Sign Out Failed", description: error.message || "Could not sign out. Please try again.", variant: "destructive" });
     }
   };
 
@@ -52,7 +90,7 @@ export function AppHeader() {
         </Link>
 
         <div className="flex items-center space-x-3">
-          {isLoading ? (
+          {authIsLoading ? ( // Use authIsLoading here
              <Button variant="ghost" size="icon" disabled className="h-9 w-9 rounded-full animate-pulse bg-muted"></Button>
           ) : isLoggedIn && user ? (
             <DropdownMenu>
@@ -88,7 +126,7 @@ export function AppHeader() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button onClick={handleSignIn} variant="outline">
+            <Button onClick={handleSignIn} variant="outline" disabled={authIsLoading}> {/* Disable button if auth is loading */}
               <LogIn className="mr-2 h-4 w-4" />
               Sign In
             </Button>
