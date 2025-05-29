@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Recipe } from '@/types/recipe';
@@ -15,8 +16,11 @@ interface RecipeDetailDialogProps {
 export function RecipeDetailDialog({ recipe, isOpen, onOpenChange }: RecipeDetailDialogProps) {
   if (!recipe) return null;
 
-  // Basic formatting for instructions
-  const formattedInstructions = recipe.instructions.split('\n').filter(line => line.trim() !== '');
+  // Basic formatting for instructions: split by newline, filter empty lines, and remove leading numbers.
+  const formattedInstructions = recipe.instructions
+    .split('\n')
+    .filter(line => line.trim() !== '')
+    .map(line => line.replace(/^\d+\.\s*/, '').trim());
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
