@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
@@ -5,18 +6,9 @@ import { useState, useEffect, useCallback } from 'react';
 type SetValue<T> = (value: T | ((val: T) => T)) => void;
 
 export function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T>] {
-  const [storedValue, setStoredValue] = useState<T>(() => {
-    if (typeof window === 'undefined') {
-      return initialValue;
-    }
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? JSON.parse(item) : initialValue;
-    } catch (error) {
-      console.error(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
-    }
-  });
+  // Initialize state with initialValue.
+  // This ensures the first render is consistent on server and client, preventing hydration errors.
+  const [storedValue, setStoredValue] = useState<T>(initialValue);
 
   const setValue: SetValue<T> = useCallback(
     (value) => {
@@ -35,36 +27,45 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, SetValue<T
   
   // Effect to update state if localStorage changes in another tab/window
   useEffect(() => {
+    if (typeof window === 'undefined') return; // Guard against server-side execution
+
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === key && event.newValue !== null) {
-        try {
-          setStoredValue(JSON.parse(event.newValue));
-        } catch (error) {
-          console.error(`Error parsing localStorage change for key "${key}":`, error);
+      if (event.key === key) {
+        if (event.newValue !== null) {
+          try {
+            setStoredValue(JSON.parse(event.newValue));
+          } catch (error) {
+            console.error(`Error parsing localStorage change for key "${key}":`, error);
+          }
+        } else {
+          // Key was removed or set to null in another tab, reset to initialValue
+          setStoredValue(initialValue);
         }
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, [key]);
+  }, [key, initialValue]); // initialValue dependency added for completeness if it can change
 
 
-  // This effect ensures that the state is initialized from localStorage on the client-side
-  // after hydration, preventing mismatches if initialValue differs from stored value.
+  // Effect to read from localStorage on client mount, after initial render.
+  // This runs only on the client, after hydration is complete.
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const item = window.localStorage.getItem(key);
-        if (item) {
-          setStoredValue(JSON.parse(item));
-        }
-      } catch (error) {
-        console.error(`Error re-reading localStorage key "${key}" on mount:`, error);
+    if (typeof window === 'undefined') return; // Guard against server-side execution
+
+    try {
+      const item = window.localStorage.getItem(key);
+      if (item) {
+        setStoredValue(JSON.parse(item));
       }
+      // If item is null, 'storedValue' correctly remains 'initialValue' from useState.
+    } catch (error) {
+      console.error(`Error reading localStorage key "${key}" on mount:`, error);
+      // If error, 'storedValue' remains 'initialValue'.
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]); // Only re-run if key changes, initialValue is handled by useState initializer
+  }, [key]); // Only re-run if 'key' changes.
 
   return [storedValue, setValue];
 }
