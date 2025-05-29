@@ -16,11 +16,14 @@ interface RecipeDetailDialogProps {
 export function RecipeDetailDialog({ recipe, isOpen, onOpenChange }: RecipeDetailDialogProps) {
   if (!recipe) return null;
 
-  // Basic formatting for instructions: split by newline, filter empty lines, and remove leading numbers.
-  const formattedInstructions = recipe.instructions
+  // Process instructions:
+  // 1. Split by newline.
+  // 2. For each line, remove any leading "number." pattern (e.g., "1. ", "02. "), then trim whitespace.
+  // 3. Filter out any lines that are now empty.
+  const processedInstructions = recipe.instructions
     .split('\n')
-    .filter(line => line.trim() !== '')
-    .map(line => line.replace(/^\d+\.\s*/, '').trim());
+    .map(line => line.replace(/^\d+\.\s*/, '').trim())
+    .filter(line => line !== '');
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -72,11 +75,20 @@ export function RecipeDetailDialog({ recipe, isOpen, onOpenChange }: RecipeDetai
                 <Soup className="h-6 w-6 mr-2 text-primary shrink-0" />
                 Instructions
               </h3>
-              <ol className="list-decimal list-outside ml-5 space-y-2 text-foreground/90">
-                {formattedInstructions.map((step, index) => (
-                  <li key={index} className="pb-1 leading-relaxed">{step}</li>
-                ))}
-              </ol>
+              {processedInstructions.length > 0 ? (
+                <div className="space-y-2 text-foreground/90">
+                  {processedInstructions.map((step, index) => (
+                    <div key={index} className="flex items-start">
+                      <span className="w-7 text-right pr-2 shrink-0 tabular-nums pt-px">
+                        {index + 1}.
+                      </span>
+                      <p className="flex-1 leading-relaxed">{step}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No detailed instructions provided for this recipe.</p>
+              )}
             </div>
           </div>
         </ScrollArea>
