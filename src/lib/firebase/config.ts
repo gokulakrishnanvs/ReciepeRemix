@@ -3,14 +3,16 @@ import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, connectAuthEmulator, type Auth } from 'firebase/auth';
 import { getFirestore, connectFirestoreEmulator, type Firestore } from 'firebase/firestore';
 
-// IMPORTANT: Replace this with your actual Firebase project configuration
+// Firebase project configuration.
+// These values are primarily read from environment variables (see .env file),
+// with fallbacks provided for local development if .env is not configured.
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "your-api-key",
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "your-auth-domain",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "your-project-id",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "your-storage-bucket",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "your-messaging-sender-id",
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "your-app-id",
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyAAmZqCX7EoQMiI6TVVhNdjpN3mmTKmtJQ",
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "recipe-remix-gknqn.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "recipe-remix-gknqn",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "recipe-remix-gknqn.appspot.com",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "1039518536875",
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:1039518536875:web:a7d56d6f6a41352e2b13ee",
 };
 
 let app: FirebaseApp;
@@ -30,9 +32,6 @@ db = getFirestore(app);
 // Make sure to start emulators: firebase emulators:start
 if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
   // Check if emulators are already running to avoid re-connecting
-  // This check is a bit naive, real emulator detection might be more complex
-  // For simplicity, we assume if one is connected, others might be too.
-  // A more robust check might involve trying a dummy request or checking a specific global flag.
   if (!(auth as any).emulatorConfig) {
      try {
       connectAuthEmulator(auth, 'http://localhost:9099', { disableWarnings: true });
