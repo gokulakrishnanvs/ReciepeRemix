@@ -1,4 +1,4 @@
-# Firebase Studio
+# Reciepe Remix
 
 This is Reciepe Remnix. Get your receipe generated based on the ingredients that you add
 
