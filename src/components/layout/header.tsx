@@ -51,31 +51,32 @@ export function AppHeader() {
           case 'auth/popup-closed-by-user':
             toastTitle = "Sign-In Cancelled";
             toastDescription = "You closed the sign-in window before completing the process.";
-            toastVariant = "default"; // Use default variant for user cancellation
+            toastVariant = "default"; 
             break;
           case 'auth/popup-blocked':
+            toastTitle = "Sign-In Failed";
             toastDescription = "Sign-in failed. The pop-up was blocked by your browser. Please disable pop-up blockers for this site and try again.";
             break;
           case 'auth/cancelled-popup-request':
-             toastTitle = "Sign-In Cancelled";
-            toastDescription = "Sign-in cancelled. Another sign-in pop-up was already active. Please close it and try again.";
+            toastTitle = "Sign-In Cancelled";
+            toastDescription = "Sign-in cancelled. Another sign-in pop-up might have been active or the request was interrupted. Please try again.";
             toastVariant = "default";
             break;
           case 'auth/operation-not-allowed':
+            toastTitle = "Sign-In Failed";
             toastDescription = "Sign-in failed. Google Sign-In may not be enabled for this app in the Firebase console. Please contact support.";
             break;
           case 'auth/unauthorized-domain':
-            toastDescription = "Sign-in failed. This domain is not authorized for OAuth operations for this Firebase project. Check your Firebase console's Auth settings.";
+            toastTitle = "Sign-In Failed";
+            toastDescription = "Sign-in failed. This domain is not authorized for OAuth operations for this Firebase project. Check your Firebase console's Auth settings and Google Cloud OAuth client authorized domains.";
             break;
           default:
+            toastTitle = "Sign In Failed";
             toastDescription = `An unexpected error occurred during sign-in. (Code: ${error.code})`;
         }
       } else {
         console.error("A non-Firebase error occurred during sign-in:", error);
       }
-      // Only show toast if it's not a user-initiated cancellation that we want to ignore,
-      // or if it's an actual error.
-      // For 'auth/popup-closed-by-user', we show a default toast. For others, a destructive one.
       toast({ title: toastTitle, description: toastDescription, variant: toastVariant });
     }
   };
